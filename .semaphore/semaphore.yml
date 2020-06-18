@@ -4,17 +4,38 @@ agent:
   machine:
     type: e1-standard-2
     os_image: ubuntu1804
-
 blocks:
-  - name: Test
+  - name: Dependency
     task:
       jobs:
-        - name: Test
+        - name: Install
           commands:
             - checkout
             - sem-version node 12
             - cache restore
             - npm install
+      epilogue:
+        always:
+          commands:
+            - echo "Starting the build"
+  - name: Artifact
+    task:
+      jobs:
+        - name: Build
+          commands:
             - cache store
-            - npm run build --if-present
+            - npm run build
+  - name: Testing
+    task:
+      epilogue:
+        always:
+          commands:
+            - echo "Building"
+      jobs:
+        - name: Test
+          commands:
+            - cache store
             - npm test
+promotions:
+  - name: Promotion 1
+    pipeline_file: pipeline_2.yml
